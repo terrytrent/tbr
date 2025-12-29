@@ -414,3 +414,44 @@ test('updateRating stores the rating and refreshes list', () => {
   assert.equal(label.textContent, '4/5');
 });
 
+test('render filters and sorts visible cards', () => {
+  resetModules();
+  const app = loadApp();
+  const list = document.getElementById('book-list');
+  const filter = document.getElementById('filter-status');
+  const sort = document.getElementById('sort-by');
+  const search = document.getElementById('search');
+
+  app.setBooks([
+    { id: 'a', title: 'Alpha', author: 'Zed', status: 'reading', priority: 3, createdAt: 2 },
+    { id: 'b', title: 'Beta', author: 'Aaron', status: 'queued', priority: 9, createdAt: 3 },
+    { id: 'c', title: 'Gamma', author: 'Zed', status: 'finished', priority: 5, createdAt: 1 },
+  ]);
+
+  filter.value = 'reading';
+  app.render();
+  assert.equal(list.children.length, 1);
+  assert.equal(list.children[0].dataset.title, 'Alpha');
+
+  filter.value = 'all';
+  search.value = 'beta';
+  app.render();
+  assert.equal(list.children.length, 1);
+  assert.equal(list.children[0].dataset.title, 'Beta');
+
+  search.value = '';
+  sort.value = 'priority';
+  app.render();
+  assert.deepEqual(
+    Array.from(list.children).map((card) => card.dataset.title),
+    ['Beta', 'Gamma', 'Alpha']
+  );
+
+  sort.value = 'created';
+  app.render();
+  assert.deepEqual(
+    Array.from(list.children).map((card) => card.dataset.title),
+    ['Beta', 'Alpha', 'Gamma']
+  );
+});
+

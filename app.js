@@ -226,6 +226,8 @@ function render() {
 function renderCard(book) {
   const card = document.createElement("article");
   card.className = "card";
+  card.dataset.title = book.title;
+  card.dataset.status = book.status;
 
   const media = document.createElement("div");
   media.className = "card-media";
