@@ -14,7 +14,7 @@
     <div class="header-text">
       <p class="eyebrow">Reading dashboard</p>
       <h1>To Be Read builder</h1>
-      <p class="lede">Capture books you want to read, group them by status, and prioritize what comes next.</p>
+      <p class="lede">Capture books you want to read, group them by status, and reorder them as your priorities change.</p>
     </div>
     <div class="stats" id="stats">
       <div class="stat">
@@ -56,24 +56,33 @@
             <input id="genre" name="genre" type="text" placeholder="Fantasy, Memoir, Product, etc.">
           </div>
         </div>
-        <div class="two-up">
-          <div class="field-group">
-            <label for="status">Status</label>
-            <select id="status" name="status">
-              <option value="wishlist">Wishlist</option>
-              <option value="queued">Queued</option>
-              <option value="reading">Reading</option>
-              <option value="finished">Finished</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label for="priority">Priority</label>
-            <input id="priority" name="priority" type="number" min="1" max="10" value="5">
-          </div>
+        <div class="field-group">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="wishlist">Wishlist</option>
+            <option value="queued">Queued</option>
+            <option value="reading">Reading</option>
+            <option value="finished">Finished</option>
+          </select>
         </div>
         <div class="field-group">
           <label for="notes">Notes</label>
           <textarea id="notes" name="notes" rows="3" placeholder="Why you want to read it, where you heard about it, etc."></textarea>
+        </div>
+        <div class="field-group conditional" id="rating-group">
+          <label>Rate this book</label>
+          <div class="star-picker" role="radiogroup" aria-label="Rating out of five stars">
+            <button type="button" class="star" data-star="1" aria-label="1 star">★</button>
+            <button type="button" class="star" data-star="2" aria-label="2 stars">★</button>
+            <button type="button" class="star" data-star="3" aria-label="3 stars">★</button>
+            <button type="button" class="star" data-star="4" aria-label="4 stars">★</button>
+            <button type="button" class="star" data-star="5" aria-label="5 stars">★</button>
+          </div>
+          <input type="hidden" name="rating" id="rating" value="0">
+        </div>
+        <div class="field-group conditional" id="review-group">
+          <label for="review">Review</label>
+          <textarea id="review" name="review" rows="3" placeholder="Share your thoughts once you've finished."></textarea>
         </div>
         <button type="submit" class="primary" id="submit-button">Add to list</button>
       </form>
@@ -94,15 +103,9 @@
             <option value="reading">Reading</option>
             <option value="finished">Finished</option>
           </select>
-          <label class="visually-hidden" for="sort-by">Sort by</label>
-          <select id="sort-by">
-            <option value="priority">Priority</option>
-            <option value="title">Title</option>
-            <option value="author">Author</option>
-            <option value="created">Recently added</option>
-          </select>
           <label class="visually-hidden" for="search">Search</label>
           <input id="search" type="search" placeholder="Search by title or author">
+          <button id="print-list" type="button" class="ghost">Print order</button>
         </div>
       </div>
       <div id="empty-state" class="empty">
