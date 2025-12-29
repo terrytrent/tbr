@@ -410,9 +410,6 @@ function renderCard(book) {
 
   content.appendChild(badges);
 
-  layout.append(media, content);
-  details.appendChild(layout);
-
   const actions = document.createElement("div");
   actions.className = "actions";
   const editBtn = document.createElement("button");
@@ -440,7 +437,6 @@ function renderCard(book) {
   }
 
   actions.append(editBtn, deleteBtn);
-  details.appendChild(actions);
 
   card.append(media, content, actions);
   return card;
