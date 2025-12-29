@@ -14,7 +14,7 @@
     <div class="header-text">
       <p class="eyebrow">Reading dashboard</p>
       <h1>To Be Read builder</h1>
-      <p class="lede">Capture books you want to read, group them by status, and prioritize what comes next.</p>
+      <p class="lede">Capture books you want to read, group them by status, and reorder them as your priorities change.</p>
     </div>
     <div class="stats" id="stats">
       <div class="stat">
@@ -56,20 +56,14 @@
             <input id="genre" name="genre" type="text" placeholder="Fantasy, Memoir, Product, etc.">
           </div>
         </div>
-        <div class="two-up">
-          <div class="field-group">
-            <label for="status">Status</label>
-            <select id="status" name="status">
-              <option value="wishlist">Wishlist</option>
-              <option value="queued">Queued</option>
-              <option value="reading">Reading</option>
-              <option value="finished">Finished</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label for="priority">Priority</label>
-            <input id="priority" name="priority" type="number" min="1" max="10" value="5">
-          </div>
+        <div class="field-group">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="wishlist">Wishlist</option>
+            <option value="queued">Queued</option>
+            <option value="reading">Reading</option>
+            <option value="finished">Finished</option>
+          </select>
         </div>
         <div class="field-group">
           <label for="notes">Notes</label>
@@ -109,15 +103,9 @@
             <option value="reading">Reading</option>
             <option value="finished">Finished</option>
           </select>
-          <label class="visually-hidden" for="sort-by">Sort by</label>
-          <select id="sort-by">
-            <option value="priority">Priority</option>
-            <option value="title">Title</option>
-            <option value="author">Author</option>
-            <option value="created">Recently added</option>
-          </select>
           <label class="visually-hidden" for="search">Search</label>
           <input id="search" type="search" placeholder="Search by title or author">
+          <button id="print-list" type="button" class="ghost">Print order</button>
         </div>
       </div>
       <div id="empty-state" class="empty">

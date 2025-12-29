@@ -2,7 +2,7 @@ const form = document.getElementById("book-form");
 const list = document.getElementById("book-list");
 const emptyState = document.getElementById("empty-state");
 const filterStatus = document.getElementById("filter-status");
-const sortBy = document.getElementById("sort-by");
+const printButton = document.getElementById("print-list");
 const searchInput = document.getElementById("search");
 const resetFormBtn = document.getElementById("reset-form");
 const submitButton = document.getElementById("submit-button");
@@ -122,7 +122,6 @@ async function handleSubmit(event) {
   const author = formData.get("author").trim();
   const genre = formData.get("genre").trim();
   const status = formData.get("status");
-  const priority = Number(formData.get("priority")) || 5;
   const notes = formData.get("notes").trim();
   const rating = status === "finished" ? Number(formData.get("rating")) || 0 : 0;
   const review = status === "finished" ? formData.get("review").trim() : "";
@@ -194,23 +193,14 @@ function renderStats(filtered) {
 function render() {
   const query = searchInput.value.toLowerCase();
   const statusFilter = filterStatus.value;
-  const sort = sortBy.value;
 
-  const filtered = books
-    .filter((book) => {
-      const matchesQuery = [book.title, book.author].some((field) =>
-        (field || "").toLowerCase().includes(query)
-      );
-      const matchesStatus = statusFilter === "all" || book.status === statusFilter;
-      return matchesQuery && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sort === "priority") return (b.priority || 0) - (a.priority || 0);
-      if (sort === "title") return a.title.localeCompare(b.title);
-      if (sort === "author") return (a.author || "").localeCompare(b.author || "");
-      if (sort === "created") return (b.createdAt || 0) - (a.createdAt || 0);
-      return 0;
-    });
+  const filtered = books.filter((book) => {
+    const matchesQuery = [book.title, book.author].some((field) =>
+      (field || "").toLowerCase().includes(query)
+    );
+    const matchesStatus = statusFilter === "all" || book.status === statusFilter;
+    return matchesQuery && matchesStatus;
+  });
 
   list.innerHTML = "";
   if (!filtered.length) {
@@ -221,6 +211,72 @@ function render() {
 
   filtered.forEach((book) => list.appendChild(renderCard(book)));
   renderStats(filtered);
+}
+
+function toggleCard(id) {
+  if (expandedCards.has(id)) {
+    expandedCards.delete(id);
+  } else {
+    expandedCards.add(id);
+  }
+  render();
+}
+
+function attachDragEvents(card, id) {
+  card.addEventListener("dragstart", (event) => {
+    draggedId = id;
+    card.classList.add("is-dragging");
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", id);
+    }
+  });
+
+  card.addEventListener("dragend", () => {
+    draggedId = null;
+    card.classList.remove("is-dragging");
+    Array.from(list.children).forEach((child) => child.classList.remove("drag-over"));
+  });
+
+  card.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    if (draggedId && draggedId !== id) {
+      card.classList.add("drag-over");
+    }
+  });
+
+  card.addEventListener("dragleave", () => {
+    card.classList.remove("drag-over");
+  });
+
+  card.addEventListener("drop", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    card.classList.remove("drag-over");
+    if (draggedId && draggedId !== id) {
+      moveBook(draggedId, id);
+    }
+    draggedId = null;
+  });
+}
+
+function moveBook(dragged, target) {
+  const draggedIndex = books.findIndex((book) => book.id === dragged);
+  const targetIndex = books.findIndex((book) => book.id === target);
+  if (draggedIndex === -1 || targetIndex === -1) return;
+  const [entry] = books.splice(draggedIndex, 1);
+  books.splice(targetIndex, 0, entry);
+  saveBooks();
+  render();
+}
+
+function moveBookToEnd(id) {
+  const index = books.findIndex((book) => book.id === id);
+  if (index === -1) return;
+  const [entry] = books.splice(index, 1);
+  books.push(entry);
+  saveBooks();
+  render();
 }
 
 function renderCard(book) {
@@ -281,11 +337,6 @@ function renderCard(book) {
   status.className = `badge status-${book.status}`;
   status.textContent = formatStatus(book.status);
   badges.appendChild(status);
-
-  const priority = document.createElement("span");
-  priority.className = "badge priority";
-  priority.textContent = `Priority ${book.priority || 0}`;
-  badges.appendChild(priority);
 
   if (book.notes) {
     const notes = document.createElement("p");
@@ -359,6 +410,9 @@ function renderCard(book) {
 
   content.appendChild(badges);
 
+  layout.append(media, content);
+  details.appendChild(layout);
+
   const actions = document.createElement("div");
   actions.className = "actions";
   const editBtn = document.createElement("button");
@@ -386,6 +440,7 @@ function renderCard(book) {
   }
 
   actions.append(editBtn, deleteBtn);
+  details.appendChild(actions);
 
   card.append(media, content, actions);
   return card;
@@ -408,7 +463,6 @@ function startEdit(book) {
   form.author.value = book.author || "";
   form.genre.value = book.genre || "";
   form.status.value = book.status;
-  form.priority.value = book.priority || 5;
   form.notes.value = book.notes || "";
   ratingInput.value = book.status === "finished" ? book.rating || 0 : 0;
   reviewInput.value = book.status === "finished" ? book.review || "" : "";
@@ -416,6 +470,75 @@ function startEdit(book) {
   toggleFinishedFields();
   submitButton.textContent = "Update book";
   form.title.focus();
+  expandedCards.add(book.id);
+}
+
+function markFinished(book) {
+  books = books.map((entry) =>
+    entry.id === book.id
+      ? { ...entry, status: "finished", rating: entry.rating || 0, review: entry.review || "" }
+      : entry
+  );
+  saveBooks();
+  const updated = books.find((entry) => entry.id === book.id);
+  reviewEdit = { id: book.id, text: updated?.review || "" };
+  render();
+}
+
+function updateRating(id, rating) {
+  books = books.map((book) =>
+    book.id === id ? { ...book, status: "finished", rating } : book
+  );
+  saveBooks();
+  render();
+}
+
+function toggleReviewEditor(book) {
+  if (reviewEdit.id === book.id) {
+    closeReviewEditor();
+    return;
+  }
+  reviewEdit = { id: book.id, text: book.review || "" };
+  render();
+}
+
+function closeReviewEditor() {
+  reviewEdit = { id: null, text: "" };
+  render();
+}
+
+function submitReview(id) {
+  books = books.map((book) =>
+    book.id === id
+      ? { ...book, status: "finished", review: reviewEdit.text.trim() }
+      : book
+  );
+  saveBooks();
+  closeReviewEditor();
+}
+
+function renderStarDisplay(book, interactive = false) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "star-display";
+  const rating = Number(book.rating) || 0;
+
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement(interactive ? "button" : "span");
+    star.className = "star" + (i <= rating ? " is-active" : "");
+    star.textContent = "★";
+    if (interactive) {
+      star.type = "button";
+      star.setAttribute("aria-label", `${i} star${i > 1 ? "s" : ""}`);
+      star.addEventListener("click", () => updateRating(book.id, i));
+    }
+    wrapper.appendChild(star);
+  }
+
+  const label = document.createElement("span");
+  label.className = "rating-label";
+  label.textContent = rating ? `${rating}/5` : "Tap a star";
+  wrapper.appendChild(label);
+  return wrapper;
 }
 
 function markFinished(book) {
@@ -497,11 +620,9 @@ function removeBook(id) {
 
 form.addEventListener("submit", handleSubmit);
 filterStatus.addEventListener("change", render);
-sortBy.addEventListener("change", render);
 searchInput.addEventListener("input", render);
 resetFormBtn.addEventListener("click", () => {
   form.reset();
-  form.querySelector("#priority").value = 5;
   editingId = null;
   submitButton.textContent = "Add to list";
   ratingInput.value = 0;

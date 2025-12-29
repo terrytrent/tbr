@@ -159,6 +159,10 @@ p { margin: 0; color: var(--muted); }
   align-items: center;
 }
 
+.controls button {
+  white-space: nowrap;
+}
+
 .controls select,
 .controls input {
   padding: 10px 12px;
@@ -183,6 +187,8 @@ p { margin: 0; color: var(--muted); }
 }
 
 .card:hover { border-color: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
+.card.is-dragging { opacity: 0.8; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); }
+.card.drag-over { border-color: var(--accent); }
 
 .card h3 { margin: 0; font-size: 18px; }
 
@@ -241,11 +247,6 @@ p { margin: 0; color: var(--muted); }
 .badge.status-queued { background: rgba(59, 130, 246, 0.15); color: #bfdbfe; }
 .badge.status-wishlist { background: rgba(234, 179, 8, 0.15); color: #fef3c7; }
 .badge.status-finished { background: rgba(148, 163, 184, 0.2); color: #e2e8f0; }
-
-.priority {
-  background: rgba(34, 211, 238, 0.12);
-  color: #a5f3fc;
-}
 
 .notes { color: #cbd5e1; margin-top: 8px; font-size: 14px; }
 
