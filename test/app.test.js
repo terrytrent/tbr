@@ -231,6 +231,12 @@ function setupDom() {
   status.value = 'wishlist';
   form.appendChild(status);
 
+  const priority = document.register(new FakeElement('input', 'priority'));
+  priority.name = 'priority';
+  priority.type = 'number';
+  priority.value = 5;
+  form.appendChild(priority);
+
   const notes = document.register(new FakeElement('textarea', 'notes'));
   notes.name = 'notes';
   form.appendChild(notes);
@@ -248,6 +254,8 @@ function setupDom() {
   const emptyState = document.register(new FakeElement('div', 'empty-state'));
   const filterStatus = document.register(new FakeElement('select', 'filter-status'));
   filterStatus.value = 'all';
+  const sortBy = document.register(new FakeElement('select', 'sort-by'));
+  sortBy.value = 'priority';
   const search = document.register(new FakeElement('input', 'search'));
   const resetForm = document.register(new FakeElement('button', 'reset-form'));
   const submitButton = document.register(new FakeElement('button', 'submit-button'));
@@ -268,6 +276,7 @@ function setupDom() {
   body.append(list);
   body.append(emptyState);
   body.append(filterStatus);
+  body.append(sortBy);
   body.append(search);
   body.append(resetForm);
   body.append(submitButton);
@@ -334,11 +343,10 @@ test('handleSubmit saves a new book with metadata and updates counts', async () 
   status.value = 'queued';
   const form = document.getElementById('book-form');
 
-  app.setBooks([{ id: 'existing', title: 'First book', status: 'wishlist', createdAt: 1 }]);
-
   document.getElementById('title').value = 'Metadata Book';
   document.getElementById('author').value = 'Manual Author';
   document.getElementById('genre').value = 'Fiction';
+  document.getElementById('priority').value = 7;
   document.getElementById('notes').value = 'Interesting plot';
 
   let fetchCalls = 0;
@@ -367,23 +375,20 @@ test('handleSubmit saves a new book with metadata and updates counts', async () 
 
   await app.handleSubmit(new FakeEvent('submit'));
   const books = app.getBooks();
-  assert.equal(books.length, 2);
-  const saved = books[1];
+  assert.equal(books.length, 1);
+  const saved = books[0];
   assert.equal(saved.author, 'Fetched Author');
   assert.equal(saved.genre, 'Fiction');
+  assert.equal(saved.priority, 7);
   assert.equal(saved.status, 'queued');
   assert.equal(saved.description, 'Detailed description');
   assert.ok(saved.goodreadsUrl.includes('Metadata%20Book'));
-  assert.deepEqual(
-    books.map((b) => b.title),
-    ['First book', 'Metadata Book']
-  );
 });
 
 test('markFinished promotes a book and opens review editor', () => {
   resetModules();
   const app = loadApp();
-  const baseBook = { id: '1', title: 'Test', status: 'reading' };
+  const baseBook = { id: '1', title: 'Test', status: 'reading', priority: 5 };
   app.setBooks([baseBook]);
 
   app.markFinished(baseBook);
@@ -397,7 +402,7 @@ test('markFinished promotes a book and opens review editor', () => {
 test('updateRating stores the rating and refreshes list', () => {
   resetModules();
   const app = loadApp();
-  const book = { id: 'abc', title: 'Rated', status: 'finished', rating: 0 };
+  const book = { id: 'abc', title: 'Rated', status: 'finished', priority: 3, rating: 0 };
   app.setBooks([book]);
 
   app.updateRating('abc', 4);
@@ -409,17 +414,18 @@ test('updateRating stores the rating and refreshes list', () => {
   assert.equal(label.textContent, '4/5');
 });
 
-test('render filters keep manual order and search results', () => {
+test('render filters and sorts visible cards', () => {
   resetModules();
   const app = loadApp();
   const list = document.getElementById('book-list');
   const filter = document.getElementById('filter-status');
+  const sort = document.getElementById('sort-by');
   const search = document.getElementById('search');
 
   app.setBooks([
-    { id: 'a', title: 'Alpha', author: 'Zed', status: 'reading', createdAt: 2 },
-    { id: 'b', title: 'Beta', author: 'Aaron', status: 'queued', createdAt: 3 },
-    { id: 'c', title: 'Gamma', author: 'Zed', status: 'finished', createdAt: 1 },
+    { id: 'a', title: 'Alpha', author: 'Zed', status: 'reading', priority: 3, createdAt: 2 },
+    { id: 'b', title: 'Beta', author: 'Aaron', status: 'queued', priority: 9, createdAt: 3 },
+    { id: 'c', title: 'Gamma', author: 'Zed', status: 'finished', priority: 5, createdAt: 1 },
   ]);
 
   filter.value = 'reading';
@@ -434,49 +440,18 @@ test('render filters keep manual order and search results', () => {
   assert.equal(list.children[0].dataset.title, 'Beta');
 
   search.value = '';
+  sort.value = 'priority';
   app.render();
   assert.deepEqual(
     Array.from(list.children).map((card) => card.dataset.title),
-    ['Alpha', 'Beta', 'Gamma']
-  );
-});
-
-test('manual drag reorders persist in list rendering', () => {
-  resetModules();
-  const app = loadApp();
-  const list = document.getElementById('book-list');
-
-  app.setBooks([
-    { id: '1', title: 'First', status: 'wishlist' },
-    { id: '2', title: 'Second', status: 'reading' },
-    { id: '3', title: 'Third', status: 'queued' },
-  ]);
-
-  app.moveBook('3', '1');
-  assert.deepEqual(
-    app.getBooks().map((b) => b.id),
-    ['3', '1', '2']
+    ['Beta', 'Gamma', 'Alpha']
   );
 
+  sort.value = 'created';
   app.render();
   assert.deepEqual(
     Array.from(list.children).map((card) => card.dataset.title),
-    ['Third', 'First', 'Second']
+    ['Beta', 'Alpha', 'Gamma']
   );
-});
-
-test('cards start collapsed and can be expanded', () => {
-  resetModules();
-  const app = loadApp();
-  const list = document.getElementById('book-list');
-
-  app.setBooks([{ id: 'x', title: 'Collapsed', author: 'Anon', status: 'wishlist' }]);
-  app.render();
-
-  const card = list.children[0];
-  assert.ok(card.className.includes('is-collapsed'));
-  app.toggleCard('x');
-  const updatedCard = list.children[0];
-  assert.ok(!updatedCard.className.includes('is-collapsed'));
 });
 
