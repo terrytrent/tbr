@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TBR Builder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-text">
+      <p class="eyebrow">Reading dashboard</p>
+      <h1>To Be Read builder</h1>
+      <p class="lede">Capture books you want to read, group them by status, and prioritize what comes next.</p>
+    </div>
+    <div class="stats" id="stats">
+      <div class="stat">
+        <span class="stat-value" id="stat-total">0</span>
+        <span class="stat-label">Total books</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="stat-active">0</span>
+        <span class="stat-label">In progress</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="stat-upcoming">0</span>
+        <span class="stat-label">Up next</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel form-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Add a book</p>
+          <h2>Create your backlog</h2>
+        </div>
+        <button class="ghost" id="reset-form" type="button">Reset</button>
+      </div>
+      <form id="book-form" class="stack">
+        <div class="field-group">
+          <label for="title">Title<span aria-hidden="true">*</span></label>
+          <input id="title" name="title" type="text" placeholder="e.g. The Night Circus" required>
+        </div>
+        <div class="two-up">
+          <div class="field-group">
+            <label for="author">Author</label>
+            <input id="author" name="author" type="text" placeholder="Erin Morgenstern">
+          </div>
+          <div class="field-group">
+            <label for="genre">Genre/Topic</label>
+            <input id="genre" name="genre" type="text" placeholder="Fantasy, Memoir, Product, etc.">
+          </div>
+        </div>
+        <div class="two-up">
+          <div class="field-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="wishlist">Wishlist</option>
+              <option value="queued">Queued</option>
+              <option value="reading">Reading</option>
+              <option value="finished">Finished</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="priority">Priority</label>
+            <input id="priority" name="priority" type="number" min="1" max="10" value="5">
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="notes">Notes</label>
+          <textarea id="notes" name="notes" rows="3" placeholder="Why you want to read it, where you heard about it, etc."></textarea>
+        </div>
+        <button type="submit" class="primary" id="submit-button">Add to list</button>
+      </form>
+    </section>
+
+    <section class="panel list-panel">
+      <div class="panel-header list-header">
+        <div>
+          <p class="eyebrow">Backlog</p>
+          <h2>Your TBR queue</h2>
+        </div>
+        <div class="controls">
+          <label class="visually-hidden" for="filter-status">Filter by status</label>
+          <select id="filter-status">
+            <option value="all">All statuses</option>
+            <option value="wishlist">Wishlist</option>
+            <option value="queued">Queued</option>
+            <option value="reading">Reading</option>
+            <option value="finished">Finished</option>
+          </select>
+          <label class="visually-hidden" for="sort-by">Sort by</label>
+          <select id="sort-by">
+            <option value="priority">Priority</option>
+            <option value="title">Title</option>
+            <option value="author">Author</option>
+            <option value="created">Recently added</option>
+          </select>
+          <label class="visually-hidden" for="search">Search</label>
+          <input id="search" type="search" placeholder="Search by title or author">
+        </div>
+      </div>
+      <div id="empty-state" class="empty">
+        <p class="eyebrow">Start tracking</p>
+        <h3>No books yet</h3>
+        <p>Add a book with the form on the left to build your list.</p>
+      </div>
+      <div id="book-list" class="list" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
