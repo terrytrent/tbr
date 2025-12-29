@@ -1,0 +1,8 @@
+{
+  "name": "tbr",
+  "version": "1.0.0",
+  "description": "To Be Read builder",
+  "scripts": {
+    "test": "node --test"
+  }
+}
