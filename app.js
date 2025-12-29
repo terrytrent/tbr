@@ -23,8 +23,6 @@ const storageKey = "tbr.books";
 let books = loadBooks();
 let editingId = null;
 let reviewEdit = { id: null, text: "" };
-const expandedCards = new Set();
-let draggedId = null;
 
 function loadBooks() {
   const stored = localStorage.getItem(storageKey);
@@ -144,6 +142,7 @@ async function handleSubmit(event) {
       author: metadata.author || author,
       genre,
       status,
+      priority,
       notes,
       rating,
       review,
@@ -160,13 +159,14 @@ async function handleSubmit(event) {
       });
     } else {
       const newBook = { id: crypto.randomUUID(), ...baseBook, createdAt: now };
-      books = [...books, newBook];
+      books = [newBook, ...books];
     }
 
     saveBooks();
     reviewEdit = { id: null, text: "" };
     render();
     form.reset();
+    form.querySelector("#priority").value = 5;
     ratingInput.value = 0;
     setRatingUI(0);
     editingId = null;
@@ -284,51 +284,6 @@ function renderCard(book) {
   card.className = "card";
   card.dataset.title = book.title;
   card.dataset.status = book.status;
-  card.draggable = true;
-  const isExpanded = expandedCards.has(book.id);
-  card.classList.toggle("is-collapsed", !isExpanded);
-
-  attachDragEvents(card, book.id);
-
-  const header = document.createElement("div");
-  header.className = "card-header";
-
-  const dragHandle = document.createElement("span");
-  dragHandle.className = "drag-handle";
-  dragHandle.textContent = "⋮⋮";
-  header.appendChild(dragHandle);
-
-  const summary = document.createElement("div");
-  summary.className = "card-summary";
-  const title = document.createElement("h3");
-  if (book.goodreadsUrl) {
-    const link = document.createElement("a");
-    link.href = book.goodreadsUrl;
-    link.target = "_blank";
-    link.rel = "noreferrer";
-    link.textContent = book.title;
-    title.appendChild(link);
-  } else {
-    title.textContent = book.title;
-  }
-  const authorLine = document.createElement("p");
-  authorLine.className = "meta";
-  authorLine.textContent = book.author || "Unknown author";
-  summary.append(title, authorLine);
-
-  const toggleBtn = document.createElement("button");
-  toggleBtn.type = "button";
-  toggleBtn.className = "collapse-toggle";
-  toggleBtn.textContent = isExpanded ? "Hide details" : "Show details";
-  toggleBtn.addEventListener("click", () => toggleCard(book.id));
-
-  header.append(summary, toggleBtn);
-
-  const details = document.createElement("div");
-  details.className = "card-details";
-
-  const layoutContainer = document.createElement("div");
-  layoutContainer.className = "card-layout";
 
   const media = document.createElement("div");
   media.className = "card-media";
@@ -346,6 +301,21 @@ function renderCard(book) {
 
   const content = document.createElement("div");
   content.className = "card-body";
+  const titleRow = document.createElement("div");
+  titleRow.className = "title-row";
+  const title = document.createElement("h3");
+  if (book.goodreadsUrl) {
+    const link = document.createElement("a");
+    link.href = book.goodreadsUrl;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = book.title;
+    title.appendChild(link);
+  } else {
+    title.textContent = book.title;
+  }
+  titleRow.appendChild(title);
+  content.appendChild(titleRow);
 
   const meta = document.createElement("p");
   meta.className = "meta";
@@ -440,8 +410,8 @@ function renderCard(book) {
 
   content.appendChild(badges);
 
-  layoutContainer.append(media, content);
-  details.appendChild(layoutContainer);
+  layout.append(media, content);
+  details.appendChild(layout);
 
   const actions = document.createElement("div");
   actions.className = "actions";
@@ -459,10 +429,7 @@ function renderCard(book) {
     const finishBtn = document.createElement("button");
     finishBtn.className = "icon-btn";
     finishBtn.textContent = "Mark finished";
-    finishBtn.addEventListener("click", () => {
-      expandedCards.add(book.id);
-      markFinished(book);
-    });
+    finishBtn.addEventListener("click", () => markFinished(book));
     actions.append(finishBtn);
   } else {
     const reviewBtn = document.createElement("button");
@@ -475,7 +442,7 @@ function renderCard(book) {
   actions.append(editBtn, deleteBtn);
   details.appendChild(actions);
 
-  card.append(header, details);
+  card.append(media, content, actions);
   return card;
 }
 
@@ -574,13 +541,80 @@ function renderStarDisplay(book, interactive = false) {
   return wrapper;
 }
 
+function markFinished(book) {
+  books = books.map((entry) =>
+    entry.id === book.id
+      ? { ...entry, status: "finished", rating: entry.rating || 0, review: entry.review || "" }
+      : entry
+  );
+  saveBooks();
+  const updated = books.find((entry) => entry.id === book.id);
+  reviewEdit = { id: book.id, text: updated?.review || "" };
+  render();
+}
+
+function updateRating(id, rating) {
+  books = books.map((book) =>
+    book.id === id ? { ...book, status: "finished", rating } : book
+  );
+  saveBooks();
+  render();
+}
+
+function toggleReviewEditor(book) {
+  if (reviewEdit.id === book.id) {
+    closeReviewEditor();
+    return;
+  }
+  reviewEdit = { id: book.id, text: book.review || "" };
+  render();
+}
+
+function closeReviewEditor() {
+  reviewEdit = { id: null, text: "" };
+  render();
+}
+
+function submitReview(id) {
+  books = books.map((book) =>
+    book.id === id
+      ? { ...book, status: "finished", review: reviewEdit.text.trim() }
+      : book
+  );
+  saveBooks();
+  closeReviewEditor();
+}
+
+function renderStarDisplay(book, interactive = false) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "star-display";
+  const rating = Number(book.rating) || 0;
+
+  for (let i = 1; i <= 5; i++) {
+    const star = document.createElement(interactive ? "button" : "span");
+    star.className = "star" + (i <= rating ? " is-active" : "");
+    star.textContent = "★";
+    if (interactive) {
+      star.type = "button";
+      star.setAttribute("aria-label", `${i} star${i > 1 ? "s" : ""}`);
+      star.addEventListener("click", () => updateRating(book.id, i));
+    }
+    wrapper.appendChild(star);
+  }
+
+  const label = document.createElement("span");
+  label.className = "rating-label";
+  label.textContent = rating ? `${rating}/5` : "Tap a star";
+  wrapper.appendChild(label);
+  return wrapper;
+}
+
 function removeBook(id) {
   books = books.filter((book) => book.id !== id);
   saveBooks();
   if (reviewEdit.id === id) {
     reviewEdit = { id: null, text: "" };
   }
-  expandedCards.delete(id);
   render();
 }
 
@@ -604,22 +638,6 @@ starButtons.forEach((btn) =>
   })
 );
 
-if (printButton) {
-  printButton.addEventListener("click", () => window.print());
-}
-
-list.addEventListener("dragover", (event) => {
-  event.preventDefault();
-});
-
-list.addEventListener("drop", (event) => {
-  event.preventDefault();
-  if (draggedId) {
-    moveBookToEnd(draggedId);
-  }
-  draggedId = null;
-});
-
 render();
 toggleFinishedFields();
 
@@ -632,8 +650,6 @@ if (typeof module !== "undefined") {
     getBooks: () => books,
     handleSubmit,
     markFinished,
-    moveBook,
-    moveBookToEnd,
     removeBook,
     render,
     renderCard,
@@ -642,7 +658,6 @@ if (typeof module !== "undefined") {
       books = [];
       editingId = null;
       reviewEdit = { id: null, text: "" };
-      expandedCards.clear();
       localStorage.removeItem(storageKey);
       render();
       toggleFinishedFields();
@@ -650,12 +665,10 @@ if (typeof module !== "undefined") {
     saveBooks,
     setBooks: (nextBooks) => {
       books = nextBooks;
-      expandedCards.clear();
       saveBooks();
       render();
     },
     setRatingUI,
-    toggleCard,
     toggleFinishedFields,
     toggleReviewEditor,
     updateRating,

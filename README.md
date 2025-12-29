@@ -3,12 +3,10 @@
 A lightweight browser-based tracker for managing your to-be-read (TBR) list. The app lets you collect books, enrich them with Open Library metadata, and keep notes as you move them through your reading pipeline.
 
 ## Features
-- Add books with title, author, genre, and personal notes.
+- Add books with title, author, genre, priority, and personal notes.
 - Automatically fetch cover art, author, and descriptions from Open Library and add a Goodreads search link for each entry.
-- Track status across wishlist, queued, reading, and finished; view aggregate stats and filter/search the list.
-- Reorder your list with drag-and-drop; new books append to the bottom and collapsed cards show only title and author until expanded.
+- Track status across wishlist, queued, reading, and finished; view aggregate stats and filter/sort/search the list.
 - Mark finished books with a star rating and written review, including inline editing of saved feedback.
-- Print your current queue in its manually prioritized order.
 - Responsive card layout that surfaces cover, description, status badges, and quick actions.
 
 ## Running the app

@@ -179,10 +179,11 @@ p { margin: 0; color: var(--muted); }
   border-radius: 16px;
   padding: 14px 16px;
   background: #0d1424;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.2s ease, transform 0.1s ease, box-shadow 0.1s ease;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+  transition: border-color 0.2s ease, transform 0.1s ease;
 }
 
 .card:hover { border-color: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
@@ -194,43 +195,6 @@ p { margin: 0; color: var(--muted); }
 .card .meta { color: var(--muted); font-size: 14px; }
 
 .card-body { display: flex; flex-direction: column; gap: 8px; }
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.card-summary { display: flex; flex-direction: column; gap: 4px; }
-
-.drag-handle {
-  color: var(--muted);
-  letter-spacing: 2px;
-  cursor: grab;
-  user-select: none;
-  font-size: 18px;
-}
-
-.collapse-toggle {
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
-  color: #e5e7eb;
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.card-details { display: grid; gap: 12px; }
-.card.is-collapsed .card-details { display: none; }
-
-.card-layout {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  align-items: start;
-}
 
 .card-media {
   width: 72px;
@@ -379,15 +343,6 @@ p { margin: 0; color: var(--muted); }
   .panel { padding: 18px; }
   .page-header { padding: 24px; }
   .layout { padding: 0 18px 24px; }
-  .card-layout { grid-template-columns: 64px 1fr; }
-  .card-header { align-items: flex-start; }
-}
-
-@media print {
-  body { background: #fff; color: #000; }
-  .page-header, .form-panel, .controls button { display: none !important; }
-  .panel { box-shadow: none; border: none; background: #fff; }
-  .card { break-inside: avoid; border: 1px solid #ccc; background: #fff; color: #000; }
-  .badge, .actions, .drag-handle, .collapse-toggle { display: none !important; }
-  .card.is-collapsed .card-details { display: grid; }
+  .card { grid-template-columns: 64px 1fr; }
+  .actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
